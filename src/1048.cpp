@@ -62,7 +62,7 @@ public:
         // dfs_entry();
 
         while (!_finished) {
-            std::cerr << "cur: " << _cur_x << " " << _cur_y << std::endl;
+            // std::cerr << "cur: " << _cur_x << " " << _cur_y << std::endl;
             update_map();
             _map[_cur_y][_cur_x] = VISITED;
             look_around();
@@ -151,7 +151,8 @@ private:
                 while (_cur_direction != d) {
                     if (clockwise_delta < anticlockwise_delta) {
                         turn_clockwise();
-                    } else {
+                    }
+                    else {
                         turn_anticlockwise();
                     }
                 }
@@ -186,7 +187,8 @@ private:
         while (_cur_direction != new_d) {
             if (clockwise_delta < anticlockwise_delta) {
                 turn_clockwise();
-            } else {
+            }
+            else {
                 turn_anticlockwise();
             }
         }
@@ -214,7 +216,8 @@ private:
                     step new_step = { { cur.self.first, cur.self.second }, { x, y } };
                     s.push(new_step);
                     goto found;
-                } else if (_map[y][x] == VISITED && temp_map[y][x] != TRACED) {
+                }
+                else if (_map[y][x] == VISITED && temp_map[y][x] != TRACED) {
                     temp_map[y][x] = TRACED;
                     q.push({ { cur.self.first, cur.self.second }, { x, y } });
                 }
@@ -288,9 +291,11 @@ private:
 
             if (view[i] == 0) {
                 _map[y][x] = EMPTY;
-            } else if (view[i] == 1) {
+            }
+            else if (view[i] == 1) {
                 _map[y][x] = OBSTACLE;
-            } else if (view[i] == 2) {
+            }
+            else if (view[i] == 2) {
                 _map[y][x] = UNKNOWN;
             }
         }

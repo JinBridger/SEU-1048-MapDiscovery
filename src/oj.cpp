@@ -218,6 +218,7 @@ int begin_task() {
 }
 
 int main(int argc, char** argv) {
+    // std::cerr << argv[0] << std::endl << argv[1] << std::endl;
     char* log_path = argv[3];
     argv[3]        = NULL;
     argc--;
