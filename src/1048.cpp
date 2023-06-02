@@ -19,7 +19,7 @@ public:
         _finished = false;
     }
 
-    void tester() {
+    void solve() {
         // update_map();
 
         // for (int i = 0; i < 5; ++i) {
@@ -62,6 +62,7 @@ public:
         // dfs_entry();
 
         while (!_finished) {
+            std::cerr << "cur: " << _cur_x << " " << _cur_y << std::endl;
             update_map();
             _map[_cur_y][_cur_x] = VISITED;
             look_around();
@@ -222,6 +223,27 @@ private:
 
     found:
         std::stack<step> path;
+        auto             cur = s.top();
+        s.pop();
+        path.push(cur);
+        while (!s.empty()) {
+            auto next = s.top();
+            s.pop();
+            while (!(next.self.first == cur.parent.first
+                     && next.self.second == cur.parent.second)) {
+                next = s.top();
+                s.pop();
+            }
+            path.push(next);
+            cur = next;
+        }
+
+        path.pop();
+        while (!path.empty()) {
+            auto next = path.top();
+            path.pop();
+            to_neighbour(next.self.first, next.self.second);
+        }
     }
 
     std::vector<int> get_view() {
@@ -395,12 +417,12 @@ private:
 };
 
 int main() {
-    // int i;
-    // std::cin >> i;
-    // while (i--) {
-    solver s;
-    s.tester();
-    // }
+    int i;
+    std::cin >> i;
+    while (i--) {
+        solver s;
+        s.solve();
+    }
     // solver s;
     // s.tester();
     return 0;
