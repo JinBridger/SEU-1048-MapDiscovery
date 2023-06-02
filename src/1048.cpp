@@ -1,5 +1,6 @@
 #include <iostream>
 #include <queue>
+#include <stack>
 #include <string>
 #include <utility>
 #include <vector>
@@ -14,6 +15,8 @@ public:
         // _map_y = 0;
         _map.resize(1, std::vector<map_block>(1, UNKNOWN));
         _map[0][0] = EMPTY;
+
+        _finished = false;
     }
 
     void tester() {
@@ -30,32 +33,61 @@ public:
         //     std::cerr << std::endl;
         // }
 
-        _map = {
-            { VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-              OBSTACLE, OBSTACLE, OBSTACLE },
-            { VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-              OBSTACLE, OBSTACLE, OBSTACLE },
-            { OBSTACLE, VISITED, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE,
-              OBSTACLE, OBSTACLE, OBSTACLE },
-            { OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-              OBSTACLE, OBSTACLE, OBSTACLE },
-            { OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-              OBSTACLE, OBSTACLE, OBSTACLE },
-            { OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, VISITED,
-              OBSTACLE, OBSTACLE, OBSTACLE },
-            { OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, VISITED, OBSTACLE, VISITED,
-              OBSTACLE, OBSTACLE },
-            { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE,
-              OBSTACLE, VISITED, OBSTACLE },
-            { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-              OBSTACLE, VISITED, OBSTACLE },
-            { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-              OBSTACLE, OBSTACLE, EMPTY },
-        };
+        // _map = {
+        //     { VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
+        //       OBSTACLE, OBSTACLE, OBSTACLE },
+        //     { VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
+        //       OBSTACLE, OBSTACLE, OBSTACLE },
+        //     { OBSTACLE, VISITED, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE,
+        //       OBSTACLE, OBSTACLE, OBSTACLE },
+        //     { OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
+        //       OBSTACLE, OBSTACLE, OBSTACLE },
+        //     { OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
+        //       OBSTACLE, OBSTACLE, OBSTACLE },
+        //     { OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, VISITED,
+        //       OBSTACLE, OBSTACLE, OBSTACLE },
+        //     { OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, VISITED, OBSTACLE,
+        //     VISITED,
+        //       OBSTACLE, OBSTACLE },
+        //     { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE,
+        //       OBSTACLE, VISITED, OBSTACLE },
+        //     { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
+        //       OBSTACLE, VISITED, OBSTACLE },
+        //     { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
+        //       OBSTACLE, OBSTACLE, EMPTY },
+        // };
 
-        _cur_x = _cur_y = 0;
+        // _cur_x = _cur_y = 0;
 
-        dfs_entry();
+        // dfs_entry();
+
+        while (!_finished) {
+            update_map();
+            _map[_cur_y][_cur_x] = VISITED;
+            look_around();
+
+            int  delta_direction[] = { 0, 1, -1, 2, -2, 3, -3, 4 };
+            bool flag              = true;
+            for (auto delta : delta_direction) {
+                int d = (_cur_direction + delta + 8) % 8;
+                if (_cur_y + _cur_view[d][3].second < 0
+                    || _cur_x + _cur_view[d][3].first < 0) {
+                    continue;
+                }
+                if (_map[_cur_y + _cur_view[d][3].second][_cur_x + _cur_view[d][3].first]
+                    == EMPTY) {
+                    to_neighbour(_cur_x + _cur_view[d][3].first,
+                                 _cur_y + _cur_view[d][3].second);
+                    flag = false;
+                    break;
+                }
+            }
+
+            if (flag)
+                to_next_empty();
+
+            // go_ahead();
+        }
     }
 
 private:
@@ -63,6 +95,10 @@ private:
         std::cout << "2" << std::endl;
         int a;
         std::cin >> a;
+        if (a == 1) {
+            _finished = true;
+            return;
+        }
 
         switch (_cur_direction) {
         case E:
@@ -96,6 +132,96 @@ private:
         }
 
         update_map();
+    }
+
+    void look_around() {
+        int old_d = _cur_direction;
+
+        for (int temp_d = old_d + 2; temp_d <= old_d + 6; temp_d++) {
+            int d = temp_d % 8;
+            if (_cur_y + _cur_view[d][3].second < 0
+                || _cur_x + _cur_view[d][3].first < 0) {
+                continue;
+            }
+            if (_map[_cur_y + _cur_view[d][3].second][_cur_x + _cur_view[d][3].first]
+                == UNKNOWN) {
+                int clockwise_delta     = (_cur_direction - d + 8) % 8;
+                int anticlockwise_delta = (d - _cur_direction + 8) % 8;
+                while (_cur_direction != d) {
+                    if (clockwise_delta < anticlockwise_delta) {
+                        turn_clockwise();
+                    } else {
+                        turn_anticlockwise();
+                    }
+                }
+                update_map();
+            }
+        }
+    }
+
+    void turn_clockwise() {
+        std::cout << 0 << std::endl;
+        _cur_direction = direction((_cur_direction + 8 - 1) % 8);
+    }
+
+    void turn_anticlockwise() {
+        std::cout << 1 << std::endl;
+        _cur_direction = direction((_cur_direction + 1) % 8);
+    }
+
+    void to_neighbour(int x, int y) {
+        int dx = x - _cur_x;
+        int dy = y - _cur_y;
+        int new_d;
+        for (new_d = 0; new_d < 8; new_d++) {
+            if (_cur_view[new_d][3].first == dx && _cur_view[new_d][3].second == dy) {
+                break;
+            }
+        }
+
+        int clockwise_delta     = (_cur_direction - new_d + 8) % 8;
+        int anticlockwise_delta = (new_d - _cur_direction + 8) % 8;
+
+        while (_cur_direction != new_d) {
+            if (clockwise_delta < anticlockwise_delta) {
+                turn_clockwise();
+            } else {
+                turn_anticlockwise();
+            }
+        }
+
+        go_ahead();
+    }
+
+    void to_next_empty() {
+        auto             temp_map = _map;
+        std::queue<step> q;
+        std::stack<step> s;
+        q.push({ { -1, -1 }, { _cur_x, _cur_y } });
+        temp_map[_cur_y][_cur_x] = TRACED;
+        while (!q.empty()) {
+            auto cur = q.front();
+            q.pop();
+            s.push(cur);
+            for (int i = 0; i < 8; ++i) {
+                int x = cur.self.first + _cur_view[i][3].first;
+                int y = cur.self.second + _cur_view[i][3].second;
+                if (x < 0 || y < 0 || y >= temp_map.size() || x >= temp_map[y].size()) {
+                    continue;
+                }
+                if (temp_map[y][x] == EMPTY) {
+                    step new_step = { { cur.self.first, cur.self.second }, { x, y } };
+                    s.push(new_step);
+                    goto found;
+                } else if (_map[y][x] == VISITED && temp_map[y][x] != TRACED) {
+                    temp_map[y][x] = TRACED;
+                    q.push({ { cur.self.first, cur.self.second }, { x, y } });
+                }
+            }
+        }
+
+    found:
+        std::stack<step> path;
     }
 
     std::vector<int> get_view() {
@@ -140,11 +266,9 @@ private:
 
             if (view[i] == 0) {
                 _map[y][x] = EMPTY;
-            }
-            else if (view[i] == 1) {
+            } else if (view[i] == 1) {
                 _map[y][x] = OBSTACLE;
-            }
-            else if (view[i] == 2) {
+            } else if (view[i] == 2) {
                 _map[y][x] = UNKNOWN;
             }
         }
@@ -225,7 +349,8 @@ private:
         OBSTACLE = 1,
         UNKNOWN  = 2,
         BORDER   = 3,
-        VISITED  = 4
+        VISITED  = 4,
+        TRACED   = 5
     } map_block;
 
     typedef enum direction {
@@ -238,6 +363,11 @@ private:
         S  = 6,
         SE = 7
     } direction;
+
+    struct step {
+        std::pair<int, int> parent;
+        std::pair<int, int> self;
+    };
 
     direction _cur_direction;
 
@@ -256,6 +386,7 @@ private:
 
     int _cur_x, _cur_y;
     // int _map_x, _map_y;
+    bool _finished;
 
     std::vector<std::vector<map_block>> _map;
 
