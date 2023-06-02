@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <queue>
 #include <stack>
@@ -20,50 +21,10 @@ public:
     }
 
     void solve() {
-        // update_map();
-
-        // for (int i = 0; i < 5; ++i) {
-        //     go_ahead();
-        // }
-
-        // for (auto i : _map) {
-        //     for (auto j : i) {
-        //         std::cerr << j << " ";
-        //     }
-        //     std::cerr << std::endl;
-        // }
-
-        // _map = {
-        //     { VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-        //       OBSTACLE, OBSTACLE, OBSTACLE },
-        //     { VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-        //       OBSTACLE, OBSTACLE, OBSTACLE },
-        //     { OBSTACLE, VISITED, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE,
-        //       OBSTACLE, OBSTACLE, OBSTACLE },
-        //     { OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-        //       OBSTACLE, OBSTACLE, OBSTACLE },
-        //     { OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-        //       OBSTACLE, OBSTACLE, OBSTACLE },
-        //     { OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE, VISITED,
-        //       OBSTACLE, OBSTACLE, OBSTACLE },
-        //     { OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, VISITED, OBSTACLE,
-        //     VISITED,
-        //       OBSTACLE, OBSTACLE },
-        //     { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, VISITED, OBSTACLE, OBSTACLE,
-        //       OBSTACLE, VISITED, OBSTACLE },
-        //     { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-        //       OBSTACLE, VISITED, OBSTACLE },
-        //     { OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE, OBSTACLE,
-        //       OBSTACLE, OBSTACLE, EMPTY },
-        // };
-
-        // _cur_x = _cur_y = 0;
-
-        // dfs_entry();
+        update_map();
 
         while (!_finished) {
             // std::cerr << "cur: " << _cur_x << " " << _cur_y << std::endl;
-            update_map();
             _map[_cur_y][_cur_x] = VISITED;
             look_around();
 
@@ -138,23 +99,94 @@ private:
     void look_around() {
         int old_d = _cur_direction;
 
+        std::vector<int> unk_blocks;
+
         for (int temp_d = old_d + 2; temp_d <= old_d + 6; temp_d++) {
             int d = temp_d % 8;
             if (_cur_y + _cur_view[d][3].second < 0
                 || _cur_x + _cur_view[d][3].first < 0) {
                 continue;
             }
+            if (_cur_y + _cur_view[d][3].second >= _map.size()
+                || _cur_x + _cur_view[d][3].first
+                       >= _map[_cur_y + _cur_view[d][3].second].size()) {
+                continue;
+            }
             if (_map[_cur_y + _cur_view[d][3].second][_cur_x + _cur_view[d][3].first]
                 == UNKNOWN) {
-                int clockwise_delta     = (_cur_direction - d + 8) % 8;
-                int anticlockwise_delta = (d - _cur_direction + 8) % 8;
-                while (_cur_direction != d) {
-                    if (clockwise_delta < anticlockwise_delta) {
-                        turn_clockwise();
-                    }
-                    else {
-                        turn_anticlockwise();
-                    }
+                unk_blocks.push_back((d - old_d + 8) % 8);
+                // int clockwise_delta     = (_cur_direction - d + 8) % 8;
+                // int anticlockwise_delta = (d - _cur_direction + 8) % 8;
+                // while (_cur_direction != d) {
+                //     if (clockwise_delta < anticlockwise_delta) {
+                //         turn_clockwise();
+                //     }
+                //     else {
+                //         turn_anticlockwise();
+                //     }
+                // }
+                // update_map();
+            }
+        }
+        if (unk_blocks.empty())
+            return;
+
+        std::sort(unk_blocks.begin(), unk_blocks.end());
+
+        // for (auto itm : unk_blocks) {
+        //     std::cerr << itm << " ";
+        // }
+        // std::cerr << std::endl;
+
+        int max_v = *unk_blocks.rbegin();
+        int min_v = *unk_blocks.begin();
+
+        int cost_clockwise     = 0;
+        int cost_anticlockwise = 0;
+
+        int max_turn_clockwise     = 7 - min_v;
+        int max_turn_anticlockwise = max_v - 1;
+
+        // std::cerr << "max_turn_clockwise: " << max_turn_clockwise << std::endl;
+        // std::cerr << "max_turn_anticlockwise: " << max_turn_anticlockwise << std::endl;
+
+        cost_clockwise = max_turn_clockwise + (max_turn_clockwise >= 4 ? 2 : 1);
+        cost_anticlockwise =
+            max_turn_anticlockwise + (max_turn_anticlockwise >= 4 ? 2 : 1);
+
+        // std::cerr << "cost_clockwise: " << cost_clockwise << std::endl;
+        // std::cerr << "cost_anticlockwise: " << cost_anticlockwise << std::endl;
+
+        if (cost_anticlockwise > cost_clockwise) {
+            if (max_turn_clockwise >= 4) {
+                for (int i = 0; i < max_turn_clockwise - 3; ++i) {
+                    turn_clockwise();
+                }
+                update_map();
+                for (int i = max_turn_clockwise - 3; i < max_turn_clockwise; ++i) {
+                    turn_clockwise();
+                }
+                update_map();
+            } else {
+                for (int i = 0; i < max_turn_clockwise; ++i) {
+                    turn_clockwise();
+                }
+                update_map();
+            }
+        } else {
+            if (max_turn_anticlockwise >= 4) {
+                for (int i = 0; i < max_turn_anticlockwise - 3; ++i) {
+                    turn_anticlockwise();
+                }
+                update_map();
+                for (int i = max_turn_anticlockwise - 3; i < max_turn_anticlockwise;
+                     ++i) {
+                    turn_anticlockwise();
+                }
+                update_map();
+            } else {
+                for (int i = 0; i < max_turn_anticlockwise; ++i) {
+                    turn_anticlockwise();
                 }
                 update_map();
             }
@@ -187,8 +219,7 @@ private:
         while (_cur_direction != new_d) {
             if (clockwise_delta < anticlockwise_delta) {
                 turn_clockwise();
-            }
-            else {
+            } else {
                 turn_anticlockwise();
             }
         }
@@ -216,8 +247,7 @@ private:
                     step new_step = { { cur.self.first, cur.self.second }, { x, y } };
                     s.push(new_step);
                     goto found;
-                }
-                else if (_map[y][x] == VISITED && temp_map[y][x] != TRACED) {
+                } else if (_map[y][x] == VISITED && temp_map[y][x] != TRACED) {
                     temp_map[y][x] = TRACED;
                     q.push({ { cur.self.first, cur.self.second }, { x, y } });
                 }
@@ -291,11 +321,9 @@ private:
 
             if (view[i] == 0) {
                 _map[y][x] = EMPTY;
-            }
-            else if (view[i] == 1) {
+            } else if (view[i] == 1) {
                 _map[y][x] = OBSTACLE;
-            }
-            else if (view[i] == 2) {
+            } else if (view[i] == 2) {
                 _map[y][x] = UNKNOWN;
             }
         }
