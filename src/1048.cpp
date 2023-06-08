@@ -168,13 +168,15 @@ private:
                     turn_clockwise();
                 }
                 update_map();
-            } else {
+            }
+            else {
                 for (int i = 0; i < max_turn_clockwise; ++i) {
                     turn_clockwise();
                 }
                 update_map();
             }
-        } else {
+        }
+        else {
             if (max_turn_anticlockwise >= 4) {
                 for (int i = 0; i < max_turn_anticlockwise - 3; ++i) {
                     turn_anticlockwise();
@@ -185,7 +187,8 @@ private:
                     turn_anticlockwise();
                 }
                 update_map();
-            } else {
+            }
+            else {
                 for (int i = 0; i < max_turn_anticlockwise; ++i) {
                     turn_anticlockwise();
                 }
@@ -220,7 +223,8 @@ private:
         while (_cur_direction != new_d) {
             if (clockwise_delta < anticlockwise_delta) {
                 turn_clockwise();
-            } else {
+            }
+            else {
                 turn_anticlockwise();
             }
         }
@@ -248,7 +252,8 @@ private:
                     step new_step = { { cur.self.first, cur.self.second }, { x, y } };
                     s.push(new_step);
                     goto found;
-                } else if (_map[y][x] == VISITED && temp_map[y][x] != TRACED) {
+                }
+                else if (_map[y][x] == VISITED && temp_map[y][x] != TRACED) {
                     temp_map[y][x] = TRACED;
                     q.push({ { cur.self.first, cur.self.second }, { x, y } });
                 }
@@ -278,7 +283,8 @@ private:
             path.pop();
             if (_map[next.self.second][next.self.first] == VISITED) {
                 to_neighbour(next.self.first, next.self.second, false);
-            } else {
+            }
+            else {
                 to_neighbour(next.self.first, next.self.second, true);
             }
         }
@@ -326,9 +332,11 @@ private:
 
             if (view[i] == 0) {
                 _map[y][x] = EMPTY;
-            } else if (view[i] == 1) {
+            }
+            else if (view[i] == 1) {
                 _map[y][x] = OBSTACLE;
-            } else if (view[i] == 2) {
+            }
+            else if (view[i] == 2) {
                 _map[y][x] = UNKNOWN;
             }
         }
@@ -341,59 +349,6 @@ private:
             view_pos[i].second += _cur_y;
         }
         return view_pos;
-    }
-
-    void dfs_entry() {
-        _path.clear();
-        int max_x = 0;
-        for (int i = 0; i < _map.size(); ++i) {
-            max_x = std::max(max_x, int(_map[i].size()));
-        }
-        _vis.resize(_map.size());
-        for (int i = 0; i < _vis.size(); ++i) {
-            _vis[i].resize(max_x);
-            for (int j = 0; j < max_x; ++j) {
-                _vis[i][j] = 0;
-            }
-        }
-
-        std::cout << "enter";
-
-        if (dfs_body(_cur_x, _cur_y)) {
-            while (!_path.empty()) {
-                std::cout << "path: ";
-                std::cout << "(" << _path.front().first << ", " << _path.front().second
-                          << "), ";
-                _path.pop_front();
-            }
-        }
-    }
-
-    bool dfs_body(int cur_x, int cur_y) {
-        // std::cout << "enter " << cur_x << cur_y << std::endl;
-        _vis[cur_y][cur_x] = 1;
-        _path.push_back(std::make_pair(cur_x, cur_y));
-        for (int x_offset = -1; x_offset <= 1; ++x_offset) {
-            for (int y_offset = -1; y_offset <= 1; ++y_offset) {
-                if (in_map(cur_x + x_offset, cur_y + y_offset)) {
-                    // std::cout << "inmap " << cur_x + x_offset << cur_y + y_offset
-                    // << std::endl;
-                    if (!_vis[cur_y + y_offset][cur_x + x_offset]) {
-                        if (_map[cur_y + y_offset][cur_x + x_offset] == VISITED) {
-                            if (dfs_body(cur_x + x_offset, cur_y + y_offset))
-                                return true;
-                        }
-                        if (_map[cur_y + y_offset][cur_x + x_offset] == EMPTY) {
-                            _path.push_back(
-                                std::make_pair(cur_x + x_offset, cur_y + y_offset));
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        _path.pop_back();
-        return false;
     }
 
     bool in_map(int x, int y) {
