@@ -53,7 +53,7 @@ public:
     }
 
 private:
-    void go_ahead() {
+    void go_ahead(bool update = true) {
         std::cout << "2" << std::endl;
         int a;
         std::cin >> a;
@@ -93,7 +93,8 @@ private:
             break;
         }
 
-        update_map();
+        if (update)
+            update_map();
     }
 
     void look_around() {
@@ -203,7 +204,7 @@ private:
         _cur_direction = direction((_cur_direction + 1) % 8);
     }
 
-    void to_neighbour(int x, int y) {
+    void to_neighbour(int x, int y, bool update = true) {
         int dx = x - _cur_x;
         int dy = y - _cur_y;
         int new_d;
@@ -224,7 +225,7 @@ private:
             }
         }
 
-        go_ahead();
+        go_ahead(update);
     }
 
     void to_next_empty() {
@@ -275,7 +276,11 @@ private:
         while (!path.empty()) {
             auto next = path.top();
             path.pop();
-            to_neighbour(next.self.first, next.self.second);
+            if (_map[next.self.second][next.self.first] == VISITED) {
+                to_neighbour(next.self.first, next.self.second, false);
+            } else {
+                to_neighbour(next.self.first, next.self.second, true);
+            }
         }
     }
 
