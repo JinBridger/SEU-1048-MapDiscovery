@@ -1,8 +1,11 @@
 #include <algorithm>
+#include <cmath>
+#include <functional>
 #include <iostream>
 #include <queue>
 #include <stack>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -185,15 +188,13 @@ private:
                     turn_clockwise();
                 }
                 update_map();
-            }
-            else {
+            } else {
                 for (int i = 0; i < max_turn_clockwise; ++i) {
                     turn_clockwise();
                 }
                 update_map();
             }
-        }
-        else {
+        } else {
             if (max_turn_anticlockwise >= 4) {
                 for (int i = 0; i < max_turn_anticlockwise - 3; ++i) {
                     turn_anticlockwise();
@@ -204,8 +205,7 @@ private:
                     turn_anticlockwise();
                 }
                 update_map();
-            }
-            else {
+            } else {
                 for (int i = 0; i < max_turn_anticlockwise; ++i) {
                     turn_anticlockwise();
                 }
@@ -240,8 +240,7 @@ private:
         while (_cur_direction != new_d) {
             if (clockwise_delta < anticlockwise_delta) {
                 turn_clockwise();
-            }
-            else {
+            } else {
                 turn_anticlockwise();
             }
         }
@@ -250,29 +249,57 @@ private:
     }
 
     void to_next_empty() {
-        auto             temp_map = _map;
-        std::queue<step> q;
-        std::stack<step> s;
-        q.push({ { -1, -1 }, { _cur_x, _cur_y } });
+        auto temp_map = _map;
+        std::priority_queue<step, std::vector<step>,
+                            std::function<bool(const step&, const step&)>>
+                                pq([](const step& lhs, const step& rhs) {
+                return lhs.f_score > rhs.f_score;
+            });
+        std::unordered_set<int> visited;
+        std::unordered_set<int> traced;
+        std::stack<step>        s;
+        pq.push({ { -1, -1 }, { _cur_x, _cur_y }, 0.0, 0.0 });
         temp_map[_cur_y][_cur_x] = TRACED;
-        while (!q.empty()) {
-            auto cur = q.front();
-            q.pop();
+        while (!pq.empty()) {
+            auto cur = pq.top();
+            pq.pop();
             s.push(cur);
-            for (int i = 0; i < 8; ++i) {
+            if (temp_map[cur.self.second][cur.self.first] == EMPTY) {
+                goto found;
+            }
+            visited.insert(cur.self.second * temp_map[0].size() + cur.self.first);
+            for (int i = 0; i < 8; i++) {
                 int x = cur.self.first + _cur_view[i][3].first;
                 int y = cur.self.second + _cur_view[i][3].second;
                 if (x < 0 || y < 0 || y >= temp_map.size() || x >= temp_map[y].size()) {
                     continue;
                 }
-                if (temp_map[y][x] == EMPTY) {
-                    step new_step = { { cur.self.first, cur.self.second }, { x, y } };
-                    s.push(new_step);
-                    goto found;
+                int position = y * temp_map[0].size() + x;
+                if (visited.count(position) > 0) {
+                    continue;
                 }
-                else if (_map[y][x] == VISITED && temp_map[y][x] != TRACED) {
+                double g_score = cur.g_score + (i % 2 == 1 ? std::sqrt(2) : 1);
+                double f_score =
+                    g_score
+                    + std::sqrt(std::pow(x - _cur_x, 2) + std::pow(y - _cur_y, 2));
+                if (temp_map[y][x] == EMPTY) {
+                    pq.push({ { cur.self.first, cur.self.second },
+                              { x, y },
+                              g_score,
+                              f_score });
+                    s.push({ { cur.self.first, cur.self.second },
+                             { x, y },
+                             g_score,
+                             f_score });
+                    traced.insert(position);
+                    goto found;
+                } else if (temp_map[y][x] == VISITED && traced.count(position) == 0) {
                     temp_map[y][x] = TRACED;
-                    q.push({ { cur.self.first, cur.self.second }, { x, y } });
+                    pq.push({ { cur.self.first, cur.self.second },
+                              { x, y },
+                              g_score,
+                              f_score });
+                    traced.insert(position);
                 }
             }
         }
@@ -300,8 +327,7 @@ private:
             path.pop();
             if (_map[next.self.second][next.self.first] == VISITED) {
                 to_neighbour(next.self.first, next.self.second, false);
-            }
-            else {
+            } else {
                 to_neighbour(next.self.first, next.self.second, true);
             }
         }
@@ -349,11 +375,9 @@ private:
 
             if (view[i] == 0) {
                 _map[y][x] = EMPTY;
-            }
-            else if (view[i] == 1) {
+            } else if (view[i] == 1) {
                 _map[y][x] = OBSTACLE;
-            }
-            else if (view[i] == 2) {
+            } else if (view[i] == 2) {
                 _map[y][x] = UNKNOWN;
             }
         }
@@ -399,6 +423,8 @@ private:
     struct step {
         std::pair<int, int> parent;
         std::pair<int, int> self;
+        double              g_score;
+        double              f_score;
     };
 
     direction _cur_direction;
