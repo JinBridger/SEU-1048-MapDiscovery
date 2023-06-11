@@ -14,14 +14,14 @@ public:
         _cur_y         = 0;
         // _map_x = 0;
         // _map_y = 0;
-        _map.resize(1, std::vector<map_block>(1, UNKNOWN));
+        _map.resize(60, std::vector<map_block>(60, UNKNOWN));
         _map[0][0] = EMPTY;
 
         _finished = false;
     }
 
     void solve() {
-        update_map();
+        // update_map();
 
         while (!_finished) {
             // std::cerr << "cur: " << _cur_x << " " << _cur_y << std::endl;
@@ -94,10 +94,27 @@ private:
         }
 
         if (update)
-            update_map();
+            ;
+        // update_map();
+    }
+
+    bool in_map_and_unknown(int x, int y) {
+        if (in_map(x, y)) {
+            return _map[y][x] == UNKNOWN;
+        }
+        return false;
     }
 
     void look_around() {
+        if (in_map_and_unknown(_cur_x + _cur_view[_cur_direction][3].first,
+                               _cur_y + _cur_view[_cur_direction][3].second)
+            || in_map_and_unknown(_cur_x + _cur_view[_cur_direction][0].first,
+                                  _cur_y + _cur_view[_cur_direction][0].second)
+            || in_map_and_unknown(_cur_x + _cur_view[_cur_direction][6].first,
+                                  _cur_y + _cur_view[_cur_direction][6].second)) {
+            update_map();
+        }
+
         int old_d = _cur_direction;
 
         std::vector<int> unk_blocks;
