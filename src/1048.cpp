@@ -5,6 +5,7 @@
 #include <queue>
 #include <stack>
 #include <string>
+#include <sys/ucontext.h>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -95,10 +96,6 @@ private:
             _cur_y += 1;
             break;
         }
-
-        if (update)
-            ;
-        // update_map();
     }
 
     bool in_map_and_unknown(int x, int y) {
@@ -108,110 +105,35 @@ private:
         return false;
     }
 
+    void execute_str(std::string str) {
+        for (int i = 0; i < str.length(); ++i) {
+            if (str[i] == '0') {
+                turn_clockwise();
+            }
+            if (str[i] == '1') {
+                turn_anticlockwise();
+            }
+            if (str[i] == '3') {
+                update_map();
+            }
+        }
+    }
+
     void look_around() {
-        if (in_map_and_unknown(_cur_x + _cur_view[_cur_direction][3].first,
-                               _cur_y + _cur_view[_cur_direction][3].second)
-            || in_map_and_unknown(_cur_x + _cur_view[_cur_direction][0].first,
-                                  _cur_y + _cur_view[_cur_direction][0].second)
-            || in_map_and_unknown(_cur_x + _cur_view[_cur_direction][6].first,
-                                  _cur_y + _cur_view[_cur_direction][6].second)) {
-            update_map();
-        }
-
+        int index = 0;
         int old_d = _cur_direction;
-
-        std::vector<int> unk_blocks;
-
-        for (int temp_d = old_d + 2; temp_d <= old_d + 6; temp_d++) {
-            int d = temp_d % 8;
-            if (_cur_y + _cur_view[d][3].second < 0
-                || _cur_x + _cur_view[d][3].first < 0) {
-                continue;
+        for (int tmp_d = old_d; tmp_d <= old_d + 7; ++tmp_d) {
+            int d  = tmp_d % 8;
+            int nx = _cur_x + _cur_view[d][3].first;
+            int ny = _cur_y + _cur_view[d][3].second;
+            if (in_map(nx, ny) && _map[ny][nx] == UNKNOWN) {
+                index += 1;
             }
-            if (_cur_y + _cur_view[d][3].second >= _map.size()
-                || _cur_x + _cur_view[d][3].first
-                       >= _map[_cur_y + _cur_view[d][3].second].size()) {
-                continue;
-            }
-            if (_map[_cur_y + _cur_view[d][3].second][_cur_x + _cur_view[d][3].first]
-                == UNKNOWN) {
-                unk_blocks.push_back((d - old_d + 8) % 8);
-                // int clockwise_delta     = (_cur_direction - d + 8) % 8;
-                // int anticlockwise_delta = (d - _cur_direction + 8) % 8;
-                // while (_cur_direction != d) {
-                //     if (clockwise_delta < anticlockwise_delta) {
-                //         turn_clockwise();
-                //     }
-                //     else {
-                //         turn_anticlockwise();
-                //     }
-                // }
-                // update_map();
-            }
+            index *= 2;
         }
-        if (unk_blocks.empty())
-            return;
-
-        std::sort(unk_blocks.begin(), unk_blocks.end());
-
-        // for (auto itm : unk_blocks) {
-        //     std::cerr << itm << " ";
-        // }
-        // std::cerr << std::endl;
-
-        int max_v = *unk_blocks.rbegin();
-        int min_v = *unk_blocks.begin();
-
-        int cost_clockwise     = 0;
-        int cost_anticlockwise = 0;
-
-        int max_turn_clockwise     = 7 - min_v;
-        int max_turn_anticlockwise = max_v - 1;
-
-        // std::cerr << "max_turn_clockwise: " << max_turn_clockwise << std::endl;
-        // std::cerr << "max_turn_anticlockwise: " << max_turn_anticlockwise << std::endl;
-
-        cost_clockwise = max_turn_clockwise + (max_turn_clockwise >= 4 ? 2 : 1);
-        cost_anticlockwise =
-            max_turn_anticlockwise + (max_turn_anticlockwise >= 4 ? 2 : 1);
-
-        // std::cerr << "cost_clockwise: " << cost_clockwise << std::endl;
-        // std::cerr << "cost_anticlockwise: " << cost_anticlockwise << std::endl;
-
-        if (cost_anticlockwise > cost_clockwise) {
-            if (max_turn_clockwise >= 4) {
-                for (int i = 0; i < max_turn_clockwise - 3; ++i) {
-                    turn_clockwise();
-                }
-                update_map();
-                for (int i = max_turn_clockwise - 3; i < max_turn_clockwise; ++i) {
-                    turn_clockwise();
-                }
-                update_map();
-            } else {
-                for (int i = 0; i < max_turn_clockwise; ++i) {
-                    turn_clockwise();
-                }
-                update_map();
-            }
-        } else {
-            if (max_turn_anticlockwise >= 4) {
-                for (int i = 0; i < max_turn_anticlockwise - 3; ++i) {
-                    turn_anticlockwise();
-                }
-                update_map();
-                for (int i = max_turn_anticlockwise - 3; i < max_turn_anticlockwise;
-                     ++i) {
-                    turn_anticlockwise();
-                }
-                update_map();
-            } else {
-                for (int i = 0; i < max_turn_anticlockwise; ++i) {
-                    turn_anticlockwise();
-                }
-                update_map();
-            }
-        }
+        index /= 2;
+        std::string sol = all_sol[index];
+        execute_str(sol);
     }
 
     void turn_clockwise() {
@@ -240,7 +162,8 @@ private:
         while (_cur_direction != new_d) {
             if (clockwise_delta < anticlockwise_delta) {
                 turn_clockwise();
-            } else {
+            }
+            else {
                 turn_anticlockwise();
             }
         }
@@ -293,7 +216,8 @@ private:
                              f_score });
                     traced.insert(position);
                     goto found;
-                } else if (temp_map[y][x] == VISITED && traced.count(position) == 0) {
+                }
+                else if (temp_map[y][x] == VISITED && traced.count(position) == 0) {
                     temp_map[y][x] = TRACED;
                     pq.push({ { cur.self.first, cur.self.second },
                               { x, y },
@@ -327,7 +251,8 @@ private:
             path.pop();
             if (_map[next.self.second][next.self.first] == VISITED) {
                 to_neighbour(next.self.first, next.self.second, false);
-            } else {
+            }
+            else {
                 to_neighbour(next.self.first, next.self.second, true);
             }
         }
@@ -375,9 +300,11 @@ private:
 
             if (view[i] == 0) {
                 _map[y][x] = EMPTY;
-            } else if (view[i] == 1) {
+            }
+            else if (view[i] == 1) {
                 _map[y][x] = OBSTACLE;
-            } else if (view[i] == 2) {
+            }
+            else if (view[i] == 2) {
                 _map[y][x] = UNKNOWN;
             }
         }
@@ -440,6 +367,40 @@ private:
         {{-1, 1}, {-2, 2}, {-1, 2}, {0, 1},  {0, 2},  {1, 2},  {1, 1},  {2, 2}},
         {{0, 1},  {0, 2},  {1, 2},  {1, 1},  {2, 2},  {2, 1},  {1, 0},   {2, 0}}
     };
+    std::string all_sol[256] = {
+    "",      "3",     "03",       "03",       "003",    "003",     "003",      "003",
+    "0003",  "30003", "0003",     "30003",    "0003",   "30003",   "0003",     "30003",
+    "113",   "3113",  "030003",   "030003",   "00003",  "300003",  "030003",   "030003",
+    "1113",  "31113", "030003",   "030003",   "00003",  "300003",  "030003",   "030003",
+    "13",    "313",   "03113",    "03113",    "130003", "130003",  "130003",   "130003",
+    "1113",  "31113", "0300003",  "0300003",  "131113", "3131113", "0030003",  "0030003",
+    "113",   "3113",  "031113",   "031113",   "131113", "3131113", "0030003",  "0030003",
+    "1113",  "31113", "0300003",  "0300003",  "131113", "3131113", "0030003",  "0030003",
+    "3",     "3",     "303",      "303",      "3003",   "3003",    "3003",     "3003",
+    "30003", "30003", "30003",    "30003",    "30003",  "30003",   "30003",    "30003",
+    "113",   "3113",  "031113",   "031113",   "300003", "300003",  "3030003",  "3030003",
+    "31113", "31113", "3030003",  "3030003",  "300003", "300003",  "3030003",  "3030003",
+    "13",    "313",   "03113",    "03113",    "130003", "130003",  "130003",   "130003",
+    "31113", "31113", "1300003",  "30300003", "131113", "3131113", "1300003",  "30030003",
+    "113",   "3113",  "031113",   "031113",   "131113", "3131113", "1131113",  "30030003",
+    "31113", "31113", "1131113",  "30300003", "131113", "3131113", "1131113",  "30030003",
+    "3",     "3",     "03",       "03",       "3003",   "3003",    "3003",     "3003",
+    "30003", "30003", "30003",    "30003",    "30003",  "30003",   "30003",    "30003",
+    "3113",  "3113",  "030003",   "030003",   "300003", "300003",  "030003",   "030003",
+    "31113", "31113", "030003",   "030003",   "300003", "300003",  "030003",   "030003",
+    "13",    "313",   "03113",    "03113",    "130003", "130003",  "130003",   "130003",
+    "31113", "31113", "0300003",  "0300003",  "131113", "3131113", "1300003",  "30030003",
+    "3113",  "3113",  "031113",   "031113",   "131113", "3131113", "30030003", "30030003",
+    "31113", "31113", "0300003",  "0300003",  "131113", "3131113", "30030003", "30030003",
+    "3",     "3",     "303",      "303",      "3003",   "3003",    "3003",     "3003",
+    "30003", "30003", "30003",    "30003",    "30003",  "30003",   "30003",    "30003",
+    "3113",  "3113",  "031113",   "031113",   "300003", "300003",  "3030003",  "3030003",
+    "31113", "31113", "3030003",  "3030003",  "300003", "300003",  "3030003",  "3030003",
+    "13",    "313",   "03113",    "03113",    "130003", "130003",  "130003",   "130003",
+    "31113", "31113", "1300003",  "30300003", "131113", "3131113", "1300003",  "30030003",
+    "3113",  "3113",  "031113",   "031113",   "131113", "3131113", "30030003", "30030003",
+    "31113", "31113", "30300003", "30300003", "131113", "3131113", "30030003", "30030003",
+};
     // clang-format on
 
     int _cur_x, _cur_y;
