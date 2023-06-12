@@ -420,7 +420,5 @@ int main() {
         solver s;
         s.solve();
     }
-    // solver s;
-    // s.tester();
     return 0;
 }
