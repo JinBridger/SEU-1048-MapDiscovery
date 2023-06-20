@@ -1,3 +1,15 @@
+/**
+ * @file oj.cpp
+ * @author SEU algorithm course group
+ * @brief problem 1048 judge program provided by SEU algorithm course group
+ *        url: http://8.218.127.172/problem.php?id=1048
+ * @version 0.1
+ * @date 2023-06-20
+ *
+ * @copyright Copyright (c) 2023 SEU algorithm course group
+ *
+ */
+
 #include "../lib/testlib/testlib.h"
 
 #include <fstream>

@@ -1,3 +1,14 @@
+/**
+ * @file bf.cpp
+ * @author jinbridge (2635480475@qq.com)
+ * @brief brute force program to solve "all_solution" array in 1048.cpp
+ * @version 0.1
+ * @date 2023-06-20
+ *
+ * @copyright Copyright (c) 2023 jinbridge. All Rights Reserved.
+ *
+ */
+
 #include <cstdio>
 #include <iostream>
 #include <string>

@@ -1,3 +1,16 @@
+/**
+ * @file run.cpp
+ * @author jinbridge (2635480475@qq.com), idawnlight (idawn@live.com)
+ * @brief local judge program of problem 1048, need POSIX environment.
+ *        map file and log are in /res folder.
+ *        change the path of map and log files before you run!
+ * @version 0.1
+ * @date 2023-06-20
+ *
+ * @copyright Copyright (c) 2023 jinbridge and idawnlight. All Rights Reserved.
+ *
+ */
+
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>

@@ -1,3 +1,16 @@
+/**
+ * @file 1048.cpp
+ * @author jinbridge (2635480475@qq.com), idawnlight (idawn@live.com)
+ * @brief a simple solution of problem 1048 in http://8.218.127.172/problem.php?id=1048
+ *        the online judge of algorithm course in Southeast University,
+ *        this code gets 13629.8 pts.
+ * @version 13629.8
+ * @date 2023-06-20
+ *
+ * @copyright Copyright (c) 2023 jinbridge and idawnlight. All Rights Reserved.
+ *
+ */
+
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -24,13 +37,12 @@ public:
     }
 
     void solve() {
-        // update_map();
-
         while (!_finished) {
-            // std::cerr << "cur: " << _cur_x << " " << _cur_y << std::endl;
             _map[_cur_y][_cur_x] = VISITED;
+            // firstly, get what 8 surrounding blocks are
             look_around();
 
+            // then check if there's an unvisited block on these directions
             int  delta_direction[] = { 0, 1, -1, 2, -2, 3, -3, 4 };
             bool flag              = true;
             for (auto delta : delta_direction) {
@@ -41,6 +53,7 @@ public:
                 }
                 if (_map[_cur_y + _cur_view[d][3].second][_cur_x + _cur_view[d][3].first]
                     == EMPTY) {
+                    // if there is a block that hasn't been visited, go there
                     to_neighbour(_cur_x + _cur_view[d][3].first,
                                  _cur_y + _cur_view[d][3].second);
                     flag = false;
@@ -48,10 +61,9 @@ public:
                 }
             }
 
+            // if all 8 surrounding blocks are visited, search an unvisited block to go
             if (flag)
                 to_next_empty();
-
-            // go_ahead();
         }
     }
 
@@ -97,6 +109,7 @@ private:
         }
     }
 
+    // check if a block is both in the map and unknown
     bool in_map_and_unknown(int x, int y) {
         if (in_map(x, y)) {
             return _map[y][x] == UNKNOWN;
@@ -104,6 +117,7 @@ private:
         return false;
     }
 
+    // execute solutions in all_solution
     void execute_str(std::string str) {
         for (int i = 0; i < str.length(); ++i) {
             if (str[i] == '0') {
@@ -121,6 +135,7 @@ private:
     void look_around() {
         int index = 0;
         int old_d = _cur_direction;
+        // get the surrounding blocks' status
         for (int tmp_d = old_d; tmp_d <= old_d + 7; ++tmp_d) {
             int d  = tmp_d % 8;
             int nx = _cur_x + _cur_view[d][3].first;
@@ -131,7 +146,8 @@ private:
             index *= 2;
         }
         index /= 2;
-        std::string sol = all_sol[index];
+        // get the solution and execute it!
+        std::string sol = all_solution[index];
         execute_str(sol);
     }
 
@@ -145,6 +161,7 @@ private:
         _cur_direction = direction((_cur_direction + 1) % 8);
     }
 
+    // go to a neighbour block
     void to_neighbour(int x, int y, bool update = true) {
         int dx = x - _cur_x;
         int dy = y - _cur_y;
@@ -170,10 +187,13 @@ private:
         go_ahead(update);
     }
 
+    // use BFS to solve a path to an unvisited block
     void to_next_empty() {
+        // copy the map to keep the original map unmodified
         auto             temp_map = _map;
         std::queue<step> q;
         std::stack<step> s;
+        // a step stores the last coord and the next coord
         q.push({ { -1, -1 }, { _cur_x, _cur_y } });
         temp_map[_cur_y][_cur_x] = TRACED;
         while (!q.empty()) {
@@ -199,6 +219,8 @@ private:
         }
 
     found:
+        // found an unvisited block
+        // now get the path
         std::stack<step> path;
         auto             cur = s.top();
         s.pop();
@@ -215,6 +237,7 @@ private:
             cur = next;
         }
 
+        // move according to the path
         path.pop();
         while (!path.empty()) {
             auto next = path.top();
@@ -228,6 +251,7 @@ private:
         }
     }
 
+    // observe
     std::vector<int> get_view() {
         std::cout << 3 << std::endl;
         std::string str;
@@ -239,6 +263,7 @@ private:
         return view;
     }
 
+    // update the map according to the observe result
     void update_map() {
         std::vector<int>                 view     = get_view();
         std::vector<std::pair<int, int>> view_pos = get_view_pos();
@@ -280,6 +305,7 @@ private:
         }
     }
 
+    // get the coord of the observe result
     std::vector<std::pair<int, int>> get_view_pos() {
         std::vector<std::pair<int, int>> view_pos = _cur_view[_cur_direction];
         for (int i = 0; i < 8; ++i) {
@@ -289,6 +315,7 @@ private:
         return view_pos;
     }
 
+    // check whether a block is in the map
     bool in_map(int x, int y) {
         if (0 <= y && y < _map.size())
             if (0 <= x && x < _map[y].size())
@@ -318,15 +345,18 @@ private:
     } direction;
 
     struct step {
-        std::pair<int, int> parent;
-        std::pair<int, int> self;
-        double              g_score;
-        double              f_score;
+        std::pair<int, int> parent;  // the last coord
+        std::pair<int, int> self;    // current coord
     };
 
     direction _cur_direction;
 
     // clang-format off
+
+    // coordinate offset of every blocks in a view
+    // the first dimension is direction (the same as enum direction)
+    // the second dimension is the sequence of the block in the direction
+    // pair stores the coordinate offset {dx, dy}
     std::vector<std::vector<std::pair<int, int>>> _cur_view = {
         {{1, 1},  {2, 2},  {2, 1},  {1, 0},   {2, 0},   {2, -1},   {1, -1},   {2, -2}},
         {{1, 0},   {2, 0},   {2, -1},   {1, -1},   {2, -2},   {1, -2},   {0, -1},   {0, -2}},
@@ -337,7 +367,12 @@ private:
         {{-1, 1}, {-2, 2}, {-1, 2}, {0, 1},  {0, 2},  {1, 2},  {1, 1},  {2, 2}},
         {{0, 1},  {0, 2},  {1, 2},  {1, 1},  {2, 2},  {2, 1},  {1, 0},   {2, 0}}
     };
-    std::string all_sol[256] = {
+
+    // the shortest solution of every situation
+    // the index is the binary of the situation
+    // e.g. assume 8 blocks around the block is 00011100=28
+    // that means the NW, W, SW directions are unknown and other directions are all known
+    std::string all_solution[256] = {
     "",      "3",     "03",       "03",       "003",    "003",     "003",      "003",
     "0003",  "30003", "0003",     "30003",    "0003",   "30003",   "0003",     "30003",
     "113",   "3113",  "030003",   "030003",   "00003",  "300003",  "030003",   "030003",
@@ -373,14 +408,13 @@ private:
 };
     // clang-format on
 
-    int _cur_x, _cur_y;
-    // int _map_x, _map_y;
+    int  _cur_x, _cur_y;  // the current coordinate
     bool _finished;
 
     std::vector<std::vector<map_block>> _map;
 
-    std::deque<std::pair<int, int>> _path;
-    std::vector<std::vector<int>>   _vis;
+    std::deque<std::pair<int, int>> _path;  // temp var used in BFS
+    std::vector<std::vector<int>>   _vis;   // temp var used in BFS
 };
 
 int main() {
@@ -388,7 +422,7 @@ int main() {
     std::cin >> i;
     while (i--) {
         solver s;
-        s.solve();
+        s.solve();  // solve it!
     }
     return 0;
 }
